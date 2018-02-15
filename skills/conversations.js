@@ -9,7 +9,7 @@ module.exports = controller => {
     "(.+)",
     ["direct_message", "direct_mention", "mention"],
     async (bot, message) => {
-      bot.api.users.info({ user: message.user }, (err, res) => {
+      bot.api.users.info({ user: message.user }, async (err, res) => {
         if (err) {
           bot.botkit.log("Failed to fetch user information", err);
           return;
@@ -19,8 +19,8 @@ module.exports = controller => {
 
         try {
           const response = await fetch(dialogueApiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               // システムから出力された context を入力することにより会話を継続します
               context,
