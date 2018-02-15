@@ -23,7 +23,7 @@ module.exports = controller => {
         message,
         `<@${
           res.user.name
-        }> ようこそジャパリパークへ！わたしはサーバルキャットのサーバルだよ！ or ${message.user}`
+        }> ようこそジャパリパークへ！わたしはサーバルキャットのサーバルだよ！`
       );
     });
   });
