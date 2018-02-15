@@ -6,8 +6,18 @@ const DIALOGUE_API_URL = `https://api.apigw.smt.docomo.ne.jp/dialogue/v1/dialogu
 const CONTEXT_EXPIRY_MS = 60000; // context の有効期限1分
 const REPLY_FREQUENCY = 0.3; // "ambient" に返答する頻度
 
+const words = [
+  "すっごーい",
+  "君はなまけもののフレンズなんだね！",
+  "君は草コインが得意なフレンズなんだね！",
+  "へーき、へーき！フレンズによって得意なこと違うから！"
+];
+
 let context = null;
 let updatedAt = null;
+
+const getRandomInt = (min, max) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
 
 /**
  * しゃべるサーバルさん
@@ -20,6 +30,14 @@ module.exports = controller => {
     (bot, message) => {
       // "ambient" の場合はたまに返答
       if (message.type === "ambient" && Math.random() >= REPLY_FREQUENCY) {
+        return;
+      }
+
+      // たまにサーバルちゃんっぽさをだす小細工
+      if (Math.random() < 0.1) {
+        const utt = words[getRandomInt(0, words.length - 1)];
+
+        bot.reply(message, utt);
         return;
       }
 
