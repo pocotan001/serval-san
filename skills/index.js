@@ -3,6 +3,7 @@
  */
 module.exports = [
   require("./ping"),
+  require("./echo"),
   require("./welcome"),
   require("./conversations")
 ];
