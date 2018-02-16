@@ -34,8 +34,12 @@ module.exports = controller => {
     ".",
     ["direct_message", "direct_mention", "mention", "ambient"],
     (bot, message) => {
-      // "ambient" の場合はたまに返答
-      if (message.type === "ambient" && Math.random() >= REPLY_FREQUENCY) {
+      // "ambient" の場合はたまに返答 (サーバルちゃんへの言及っぽかったら拾う)
+      if (
+        message.type === "ambient" &&
+        !/さーばる|サーバル|serval/.test(message.text) &&
+        Math.random() >= REPLY_FREQUENCY
+      ) {
         return;
       }
 
