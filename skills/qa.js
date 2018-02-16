@@ -30,6 +30,8 @@ module.exports = controller => {
 
           const parsedBody = JSON.parse(body);
 
+          bot.reply(message, JSON.stringify(parsedBody, null, 2));
+
           bot.reply(message, parsedBody.message.textForDisplay);
         }
       );
