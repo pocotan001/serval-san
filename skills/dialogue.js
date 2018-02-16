@@ -1,6 +1,6 @@
 const request = require("request");
 
-const DIALOGUE_API_URL = `https://api.apigw.smt.docomo.ne.jp/dialogue/v1/dialogue?APIKEY=${
+const API_URL = `https://api.apigw.smt.docomo.ne.jp/dialogue/v1/dialogue?APIKEY=${
   process.env.DOCOMO_API_KEY
 }`;
 const CONTEXT_EXPIRY_MS = 60000; // context の有効期限1分
@@ -65,7 +65,7 @@ module.exports = controller => {
         request(
           {
             method: "post",
-            uri: DIALOGUE_API_URL,
+            uri: API_URL,
             json: {
               // システムから出力された context を入力することにより会話を継続します
               context,

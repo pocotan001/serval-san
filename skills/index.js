@@ -3,7 +3,8 @@
  */
 module.exports = [
   require("./ping"),
-  require("./echo"),
   require("./welcome"),
-  require("./conversations")
+  require("./echo"),
+  require("./qa"),
+  require("./dialogue")
 ];
