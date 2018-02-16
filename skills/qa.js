@@ -14,14 +14,13 @@ module.exports = controller => {
     "[?？]$",
     ["direct_message", "direct_mention", "mention"],
     (bot, message) => {
+      // 質問内容を設定します
+      const q = querystring.escape(message.text);
+
       request(
         {
-          method: "post",
-          uri: API_URL,
-          json: {
-            // 質問内容を設定します
-            q: querystring.escape(message.text)
-          }
+          method: "GET",
+          uri: `${API_URL}&q=${q}`
         },
         (err, _, body) => {
           if (err) {
@@ -29,7 +28,9 @@ module.exports = controller => {
             return;
           }
 
-          bot.reply(message, body.message.textForDisplay);
+          const parsedBody = JSON.parse(body);
+
+          bot.reply(message, parsedBody.message.textForDisplay);
         }
       );
     }

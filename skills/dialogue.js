@@ -64,7 +64,7 @@ module.exports = controller => {
 
         request(
           {
-            method: "post",
+            method: "POST",
             uri: API_URL,
             json: {
               // システムから出力された context を入力することにより会話を継続します
