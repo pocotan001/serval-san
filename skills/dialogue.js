@@ -8,7 +8,7 @@ const QA_API_URL = `https://api.apigw.smt.docomo.ne.jp/knowledgeQA/v1/ask?APIKEY
   process.env.DOCOMO_API_KEY
 }`;
 const CONTEXT_EXPIRY_MS = 60000; // context の有効期限1分
-const REPLY_FREQUENCY = 0.2; // "ambient" に返答する頻度
+const REPLY_FREQUENCY = 0.15; // "ambient" に返答する頻度
 const WORDS = [
   "すっごーい！",
   "おー！たーのしー！",
