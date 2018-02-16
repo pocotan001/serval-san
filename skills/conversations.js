@@ -4,13 +4,19 @@ const DIALOGUE_API_URL = `https://api.apigw.smt.docomo.ne.jp/dialogue/v1/dialogu
   process.env.DOCOMO_API_KEY
 }`;
 const CONTEXT_EXPIRY_MS = 60000; // context の有効期限1分
-const REPLY_FREQUENCY = 0.3; // "ambient" に返答する頻度
-
-const words = [
-  "すっごーい",
+const REPLY_FREQUENCY = 0.2; // "ambient" に返答する頻度
+const WORDS = [
+  "すっごーい！",
+  "おー！ たーのしー！",
+  "たべないよ！",
+  "いや、わからん",
+  "たまらないです ぐへえへへ",
+  "う゛っ",
+  "うわああああ、しゃべったああ～",
   "君はなまけもののフレンズなんだね！",
   "君は草コインが得意なフレンズなんだね！",
-  "へーき、へーき！フレンズによって得意なこと違うから！"
+  "へーき、へーき！フレンズによって得意なこと違うから！",
+  "あーそーゆーことね、完全に理解した"
 ];
 
 let context = null;
@@ -35,7 +41,7 @@ module.exports = controller => {
 
       // たまにサーバルちゃんっぽさをだす小細工
       if (Math.random() < 0.1) {
-        const utt = words[getRandomInt(0, words.length - 1)];
+        const utt = WORDS[getRandomInt(0, WORDS.length - 1)];
 
         bot.reply(message, utt);
         return;
@@ -62,7 +68,7 @@ module.exports = controller => {
               // ユーザの発話を入力します
               utt: message.text,
               // ユーザのニックネームを設定します
-              nickname: message.user
+              nickname: res.user.name
             }
           },
           (err, _, body) => {
