@@ -7,7 +7,7 @@ const CONTEXT_EXPIRY_MS = 60000; // context の有効期限1分
 const REPLY_FREQUENCY = 0.2; // "ambient" に返答する頻度
 const WORDS = [
   "すっごーい！",
-  "おー！ たーのしー！",
+  "おー！たーのしー！",
   "たべないよ！",
   "いや、わからん",
   "たまらないです ぐへえへへ",
