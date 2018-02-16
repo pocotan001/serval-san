@@ -116,7 +116,7 @@ module.exports = controller => {
       }
 
       // たまにサーバルちゃんっぽさをだす小細工
-      if (Math.random() < 0.1) {
+      if (Math.random() < 0.05) {
         const utt = WORDS[getRandomInt(0, WORDS.length - 1)];
 
         bot.reply(message, utt);
