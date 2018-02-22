@@ -149,7 +149,7 @@ module.exports = controller => {
         return;
       }
 
-      // たまにつぶやく (30秒 〜 10分後にコール)
+      // たまに追加でつぶやく (30秒 〜 10分後にコール)
       if (Math.random() < 0.1) {
         setTimeout(() => {
           tweet(bot, message);
