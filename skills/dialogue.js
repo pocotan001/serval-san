@@ -1,3 +1,4 @@
+const Twitter = require("twitter");
 const request = require("request");
 const qs = require("querystring");
 
@@ -9,6 +10,7 @@ const QA_API_URL = `https://api.apigw.smt.docomo.ne.jp/knowledgeQA/v1/ask?APIKEY
 }`;
 const CONTEXT_EXPIRY_MS = 60000; // context の有効期限1分
 const REPLY_FREQUENCY = 0.15; // "ambient" に返答する頻度
+
 const WORDS = [
   "すっごーい！",
   "おー！たーのしー！",
@@ -23,6 +25,13 @@ const WORDS = [
   "あーそーゆーことね、完全に理解した"
 ];
 
+const twitter = new Twitter({
+  consumer_key: process.env.TWITTER_CONSUMER_KEY,
+  consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+  access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
+  access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
+});
+
 let context = null;
 let updatedAt = null;
 
@@ -36,7 +45,7 @@ const getRandomInt = (min, max) =>
 const dialogue = (bot, message) => {
   bot.api.users.info({ user: message.user }, (err, res) => {
     if (err) {
-      bot.botkit.log("Failed to fetch user information", err);
+      bot.botkit.log(JSON.stringify(err));
       return;
     }
 
@@ -55,7 +64,7 @@ const dialogue = (bot, message) => {
       },
       (err, _, body) => {
         if (err) {
-          bot.botkit.log(err);
+          bot.botkit.log(JSON.stringify(err));
           return;
         }
 
@@ -82,7 +91,7 @@ const qa = (bot, message) => {
     },
     (err, _, body) => {
       if (err) {
-        bot.botkit.log(err);
+        bot.botkit.log(JSON.stringify(err));
         return;
       }
 
@@ -99,6 +108,29 @@ const qa = (bot, message) => {
 };
 
 /**
+ * つぶやき
+ */
+const tweet = (bot, message) => {
+  // たまにしゅうまい君
+  const twitterId = Math.random() < 0.2 ? "shuumai" : "serval_chan";
+
+  twitter
+    .get("search/tweets", {
+      q: `from:${twitterId}`
+    })
+    .then(tweets => {
+      const { text } = tweets.statuses[
+        getRandomInt(0, tweets.statuses.length - 1)
+      ];
+
+      bot.reply(message, text);
+    })
+    .catch(err => {
+      bot.botkit.log(JSON.stringify(err));
+    });
+};
+
+/**
  * しゃべるサーバルさん
  */
 module.exports = controller => {
@@ -106,17 +138,26 @@ module.exports = controller => {
     ".",
     ["direct_message", "direct_mention", "mention", "ambient"],
     (bot, message) => {
-      // "ambient" の場合はたまに返答 (サーバルちゃんへの言及っぽかったら拾う)
-      if (
-        message.type === "ambient" &&
-        !/さーばる|サーバル|serval/.test(message.text) &&
-        Math.random() >= REPLY_FREQUENCY
-      ) {
-        return;
+      // "ambient" の場合はたまに返答
+      if (message.type === "ambient") {
+        // サーバルちゃんへの言及っぽかったら拾う
+        if (/さーばる|サーバル|serval/.test(message.text)) {
+          tweet(bot, message);
+          return;
+        } else if (Math.random() >= REPLY_FREQUENCY) {
+          return;
+        }
+      }
+
+      // たまにつぶやく (30秒 〜 10分後にコール)
+      if (Math.random() < 0.1) {
+        setTimeout(() => {
+          bot.reply(message, text);
+        }, getRandomInt(30000, 600000));
       }
 
       // たまにサーバルちゃんっぽさをだす小細工
-      if (Math.random() < 0.05) {
+      if (Math.random() < 0.1) {
         const utt = WORDS[getRandomInt(0, WORDS.length - 1)];
 
         bot.reply(message, utt);

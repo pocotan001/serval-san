@@ -5,6 +5,5 @@ module.exports = [
   require("./ping"),
   require("./welcome"),
   require("./echo"),
-  require("./tweet"),
   require("./dialogue")
 ];

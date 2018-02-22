@@ -8,14 +8,14 @@ module.exports = controller => {
       },
       err => {
         if (err) {
-          bot.botkit.log("Failed to add :sugoi: reaction", err);
+          bot.botkit.log(JSON.stringify(err));
         }
       }
     );
 
     bot.api.users.info({ user: message.user }, (err, res) => {
       if (err) {
-        bot.botkit.log("Failed to fetch user information", err);
+        bot.botkit.log(JSON.stringify(err));
         return;
       }
 
