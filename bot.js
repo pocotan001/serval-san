@@ -132,6 +132,13 @@ if (!process.env.clientId || !process.env.clientSecret) {
   // Load skills
   require("./skills").forEach(skill => skill(controller));
 
+  controller.on('rtm:start', (config) => {
+    const bot = controller.spawn(config);
+
+    // Load crons
+    require("./crons").forEach(cron => cron(bot));
+  });
+
   // This captures and evaluates any message sent to the bot as a DM
   // or sent to the bot in the form "@bot message" and passes it to
   // Botkit Studio to evaluate for trigger words and patterns.
