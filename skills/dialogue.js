@@ -138,21 +138,21 @@ module.exports = controller => {
     ".",
     ["direct_message", "direct_mention", "mention", "ambient"],
     (bot, message) => {
+      // サーバルちゃんへの言及っぽかったら拾う
+      if (/さーばる|サーバル|serval/.test(message.text)) {
+        tweet(bot, message);
+        return;
+      }
+
       // "ambient" の場合はたまに返答
-      if (message.type === "ambient") {
-        // サーバルちゃんへの言及っぽかったら拾う
-        if (/さーばる|サーバル|serval/.test(message.text)) {
-          tweet(bot, message);
-          return;
-        } else if (Math.random() >= REPLY_FREQUENCY) {
-          return;
-        }
+      if (message.type === "ambient" && Math.random() >= REPLY_FREQUENCY) {
+        return;
       }
 
       // たまにつぶやく (30秒 〜 10分後にコール)
       if (Math.random() < 0.1) {
         setTimeout(() => {
-          bot.reply(message, text);
+          tweet(bot, message);
         }, getRandomInt(30000, 600000));
       }
 
