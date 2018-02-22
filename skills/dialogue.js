@@ -1,5 +1,5 @@
 const request = require("request");
-const querystring = require("querystring");
+const qs = require("querystring");
 
 const DIALOGUE_API_URL = `https://api.apigw.smt.docomo.ne.jp/dialogue/v1/dialogue?APIKEY=${
   process.env.DOCOMO_API_KEY
@@ -73,7 +73,7 @@ const dialogue = (bot, message) => {
  */
 const qa = (bot, message) => {
   // 質問内容を設定します
-  const q = querystring.escape(message.text);
+  const q = qs.escape(message.text);
 
   request(
     {
