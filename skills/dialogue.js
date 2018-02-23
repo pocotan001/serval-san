@@ -11,20 +11,6 @@ const QA_API_URL = `https://api.apigw.smt.docomo.ne.jp/knowledgeQA/v1/ask?APIKEY
 const CONTEXT_EXPIRY_MS = 60000; // context の有効期限1分
 const REPLY_FREQUENCY = 0.15; // "ambient" に返答する頻度
 
-const WORDS = [
-  "すっごーい！",
-  "おー！たーのしー！",
-  "たべないよ！",
-  "いや、わからん",
-  "たまらないです ぐへえへへ",
-  "う゛っ",
-  "うわああああ、しゃべったああ～",
-  "君はなまけもののフレンズなんだね！",
-  "君は草コインが得意なフレンズなんだね！",
-  "へーき、へーき！フレンズによって得意なこと違うから！",
-  "あーそーゆーことね、完全に理解した"
-];
-
 const twitter = new Twitter({
   consumer_key: process.env.TWITTER_CONSUMER_KEY,
   consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
@@ -112,12 +98,11 @@ const qa = (bot, message) => {
  */
 const tweet = (bot, message) => {
   // たまにしゅうまい君
-  const twitterId = Math.random() < 0.2 ? "shuumai" : "serval_chan";
+  const q =
+    Math.random() < 0.2 ? "from:shuumai min_faves:500" : "from:Leptailurus_bot";
 
   twitter
-    .get("search/tweets", {
-      q: `from:${twitterId}`
-    })
+    .get("search/tweets", { q })
     .then(tweets => {
       const { text } = tweets.statuses[
         getRandomInt(0, tweets.statuses.length - 1)
@@ -149,19 +134,11 @@ module.exports = controller => {
         return;
       }
 
-      // たまに追加でつぶやく (30秒 〜 10分後にコール)
-      if (Math.random() < 0.1) {
+      // たまに追加でつぶやく (5-30分後にコール)
+      if (Math.random() < 0.15) {
         setTimeout(() => {
           tweet(bot, message);
-        }, getRandomInt(30000, 600000));
-      }
-
-      // たまにサーバルちゃんっぽさをだす小細工
-      if (Math.random() < 0.1) {
-        const utt = WORDS[getRandomInt(0, WORDS.length - 1)];
-
-        bot.reply(message, utt);
-        return;
+        }, getRandomInt(300000, 1800000));
       }
 
       // 有効期限を超えてたら context を破棄
