@@ -1,14 +1,7 @@
 const Twitter = require("twitter");
 const request = require("request");
-const qs = require("querystring");
 
-const DIALOGUE_API_URL = `https://api.apigw.smt.docomo.ne.jp/dialogue/v1/dialogue?APIKEY=${
-  process.env.DOCOMO_API_KEY
-}`;
-const QA_API_URL = `https://api.apigw.smt.docomo.ne.jp/knowledgeQA/v1/ask?APIKEY=${
-  process.env.DOCOMO_API_KEY
-}`;
-const CONTEXT_EXPIRY_MS = 60000; // context の有効期限1分
+const CONTEXT_EXPIRY_MS = 60000; // 雑談対話 context の有効期限
 const REPLY_FREQUENCY = 0.15; // "ambient" に返答する頻度
 
 const twitter = new Twitter({
@@ -29,6 +22,11 @@ const getRandomInt = (min, max) =>
  * https://dev.smt.docomo.ne.jp/?p=docs.api.page&api_name=dialogue&p_name=api_usage_scenario
  */
 const dialogue = (bot, message) => {
+  // 有効期限を超えてたら context を破棄
+  if (updatedAt && Date.now() - updatedAt > CONTEXT_EXPIRY_MS) {
+    context = null;
+  }
+
   bot.api.users.info({ user: message.user }, (err, res) => {
     if (err) {
       bot.botkit.log(JSON.stringify(err));
@@ -38,7 +36,9 @@ const dialogue = (bot, message) => {
     request(
       {
         method: "POST",
-        uri: DIALOGUE_API_URL,
+        uri: `https://api.apigw.smt.docomo.ne.jp/dialogue/v1/dialogue?APIKEY=${
+          process.env.DOCOMO_API_KEY
+        }`,
         json: {
           // システムから出力された context を入力することにより会話を継続します
           context,
@@ -60,37 +60,6 @@ const dialogue = (bot, message) => {
       }
     );
   });
-};
-
-/**
- * 知識Q&A API
- * https://dev.smt.docomo.ne.jp/?p=docs.api.page&api_name=knowledge_qa&p_name=api_usage_scenario
- */
-const qa = (bot, message) => {
-  // 質問内容を設定します
-  const q = qs.escape(message.text);
-
-  request(
-    {
-      method: "GET",
-      uri: `${QA_API_URL}&q=${q}`
-    },
-    (err, _, body) => {
-      if (err) {
-        bot.botkit.log(JSON.stringify(err));
-        return;
-      }
-
-      const parsedBody = JSON.parse(body);
-
-      if (!!parsedBody.answers.length) {
-        bot.reply(message, parsedBody.message.textForDisplay);
-      } else {
-        // 答えがわかんなかったら雑談 API に投げる
-        dialogue(bot, message);
-      }
-    }
-  );
 };
 
 /**
@@ -141,17 +110,7 @@ module.exports = controller => {
         }, getRandomInt(300000, 1800000));
       }
 
-      // 有効期限を超えてたら context を破棄
-      if (updatedAt && Date.now() - updatedAt > CONTEXT_EXPIRY_MS) {
-        context = null;
-      }
-
-      // 末尾が ? なら Q&A へ
-      if (/[?？]$/.test(message.text)) {
-        qa(bot, message);
-      } else {
-        dialogue(bot, message);
-      }
+      dialogue(bot, message);
     }
   );
 };
