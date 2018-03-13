@@ -1,9 +1,12 @@
 const Twitter = require("twitter");
 const request = require("request");
 
-const CONTEXT_EXPIRY_MS = 60000; // 雑談対話 context の有効期限
+const CONTEXT_EXPIRY_MS = 180000; // 雑談対話 context の有効期限
 const REPLY_FREQUENCY = 0.15; // "ambient" に返答する頻度
 
+/**
+ * Twitter の API クライアント
+ */
 const twitter = new Twitter({
   consumer_key: process.env.TWITTER_CONSUMER_KEY,
   consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
@@ -11,8 +14,12 @@ const twitter = new Twitter({
   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 });
 
-let context = null;
-let updatedAt = null;
+/**
+ * チャンネル毎に保持する雑談対話用 context
+ *
+ * Map<channelId, { context: string; updatedAt: number; }>
+ */
+const contexts = new Map();
 
 const getRandomInt = (min, max) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
@@ -22,10 +29,9 @@ const getRandomInt = (min, max) =>
  * https://dev.smt.docomo.ne.jp/?p=docs.api.page&api_name=dialogue&p_name=api_usage_scenario
  */
 const dialogue = (bot, message) => {
-  // 有効期限を超えてたら context を破棄
-  if (updatedAt && Date.now() - updatedAt > CONTEXT_EXPIRY_MS) {
-    context = null;
-  }
+  const { context, updatedAt } = contexts.get(message.channel) || {};
+  const isContextExpired =
+    updatedAt && Date.now() - updatedAt > CONTEXT_EXPIRY_MS;
 
   bot.api.users.info({ user: message.user }, (err, res) => {
     if (err) {
@@ -41,7 +47,7 @@ const dialogue = (bot, message) => {
         }`,
         json: {
           // システムから出力された context を入力することにより会話を継続します
-          context,
+          context: !isContextExpired ? context : undefined,
           // ユーザの発話を入力します
           utt: message.text,
           // ユーザのニックネームを設定します
@@ -54,8 +60,12 @@ const dialogue = (bot, message) => {
           return;
         }
 
-        context = body.context;
-        updatedAt = Date.now();
+        // Channel ID 毎に context と更新日時を保持
+        contexts.set(message.channel, {
+          context: body.context,
+          updatedAt: Date.now()
+        });
+
         bot.reply(message, body.utt);
       }
     );
@@ -103,14 +113,19 @@ module.exports = controller => {
         return;
       }
 
+      // 雑談 API or たまにつぶやきで返答
+      if (Math.random() < 0.15) {
+        tweet(bot, message);
+      } else {
+        dialogue(bot, message);
+      }
+
       // たまに追加でつぶやく (5-30分後にコール)
       if (Math.random() < 0.15) {
         setTimeout(() => {
           tweet(bot, message);
         }, getRandomInt(300000, 1800000));
       }
-
-      dialogue(bot, message);
     }
   );
 };
