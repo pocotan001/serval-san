@@ -87,7 +87,8 @@ const tweet = (bot, message) => {
         getRandomInt(0, tweets.statuses.length - 1)
       ];
 
-      bot.reply(message, text);
+      // メンション @xxx を削除
+      bot.reply(message, text.replace(/@[\w ]+/, ""));
     })
     .catch(err => {
       bot.botkit.log(JSON.stringify(err));
