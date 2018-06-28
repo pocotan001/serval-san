@@ -2,7 +2,7 @@ const Twitter = require("twitter");
 const request = require("request");
 
 const CONTEXT_EXPIRY_MS = 180000; // 雑談対話 context の有効期限
-const REPLY_FREQUENCY = 0.15; // "ambient" に返答する頻度
+const REPLY_FREQUENCY = 0.1; // "ambient" に返答する頻度
 
 /**
  * Twitter の API クライアント
