@@ -31,6 +31,17 @@ const formatDate = date =>
     second: "2-digit"
   });
 
+// たまにキャラ変わる
+const getRandomT = () => {
+  const result = Math.random();
+
+  if (result < 0.1) {
+    return "kansai";
+  } else if (result < 0.2) {
+    return "akachan";
+  }
+};
+
 /**
  * ユーザ登録（雑談対話）
  * https://dev.smt.docomo.ne.jp/?p=docs.api.page&api_name=natural_dialogue&p_name=api_4_user_registration#tag01
@@ -87,7 +98,11 @@ const dialogue = (bot, message) => {
                 nickname: res.user.name,
                 sex: "男",
                 place: "東京",
-                mode: "dialog"
+                mode: "dialog",
+                // kansai：関西弁キャラ
+                // akachan：赤ちゃんキャラ
+                // 指定なし：デフォルトキャラ
+                t: getRandomT()
               }
             },
             appRecvTime: user.serverSendTime || formatDate(new Date()),
@@ -100,7 +115,6 @@ const dialogue = (bot, message) => {
             return;
           }
 
-          
           user.serverSendTime = body.serverSendTime;
           users.set(user.id, user);
           bot.reply(message, body.systemText.expression);
