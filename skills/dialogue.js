@@ -1,7 +1,6 @@
 const Twitter = require("twitter");
 const request = require("request");
 
-const CONTEXT_EXPIRY_MS = 180000; // 雑談対話 context の有効期限
 const REPLY_FREQUENCY = 0.1; // "ambient" に返答する頻度
 
 /**
@@ -14,61 +13,119 @@ const twitter = new Twitter({
   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 });
 
-/**
- * チャンネル毎に保持する雑談対話用 context
- *
- * Map<channelId, { context: string; updatedAt: number; }>
- */
-const contexts = new Map();
+// Map<userId, { id: string; appId: string; serverSendTime: string }>
+const users = new Map();
 
 const getRandomInt = (min, max) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
+const formatDate = date =>
+  date.toLocaleDateString([], {
+    timeZone: "Asia/Tokyo",
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+
+/**
+ * ユーザ登録（雑談対話）
+ * https://dev.smt.docomo.ne.jp/?p=docs.api.page&api_name=natural_dialogue&p_name=api_4_user_registration#tag01
+ */
+const registration = cb => {
+  request(
+    {
+      method: "POST",
+      uri: `https://api.apigw.smt.docomo.ne.jp/naturalChatting/v1/registration?APIKEY=${
+        process.env.DOCOMO_API_KEY
+      }`,
+      json: {
+        botId: "Chatting",
+        appKind: "serval-san"
+      }
+    },
+    (err, _, body) => {
+      if (err) {
+        cb(err);
+        return;
+      }
+
+      // body: { appId: string }
+      cb(null, body);
+    }
+  );
+};
+
 /**
  * 雑談対話 API
- * https://dev.smt.docomo.ne.jp/?p=docs.api.page&api_name=dialogue&p_name=api_usage_scenario
+ * https://dev.smt.docomo.ne.jp/?p=docs.api.page&api_name=natural_dialogue&p_name=api_4#tag01
  */
 const dialogue = (bot, message) => {
-  const { context, updatedAt } = contexts.get(message.channel) || {};
-  const isContextExpired =
-    updatedAt && Date.now() - updatedAt > CONTEXT_EXPIRY_MS;
-
   bot.api.users.info({ user: message.user }, (err, res) => {
     if (err) {
       bot.botkit.log(JSON.stringify(err));
       return;
     }
 
-    request(
-      {
-        method: "POST",
-        uri: `https://api.apigw.smt.docomo.ne.jp/dialogue/v1/dialogue?APIKEY=${
-          process.env.DOCOMO_API_KEY
-        }`,
-        json: {
-          // システムから出力された context を入力することにより会話を継続します
-          context: !isContextExpired ? context : undefined,
-          // ユーザの発話を入力します
-          utt: message.text,
-          // ユーザのニックネームを設定します
-          nickname: res.user.name
+    const dialog = user => {
+      request(
+        {
+          method: "POST",
+          uri: `https://api.apigw.smt.docomo.ne.jp/naturalChatting/v1/dialogue?APIKEY=${
+            process.env.DOCOMO_API_KEY
+          }`,
+          json: {
+            language: "ja-JP",
+            botId: "Chatting",
+            appId: user.appId,
+            voiceText: message.text,
+            clientData: {
+              option: {
+                nickname: res.user.name,
+                sex: "男",
+                place: "東京",
+                mode: "dialog"
+              }
+            },
+            appRecvTime: user.serverSendTime || formatDate(new Date()),
+            appSendTime: formatDate(new Date())
+          }
+        },
+        (err, _, body) => {
+          if (err) {
+            bot.botkit.log(JSON.stringify(err));
+            return;
+          }
+
+          
+          user.serverSendTime = body.serverSendTime;
+          users.set(user.id, user);
+          bot.reply(message, body.systemText.expression);
         }
-      },
-      (err, _, body) => {
+      );
+    };
+
+    if (users.has(res.user.id)) {
+      const user = users.get(res.user.id);
+
+      dialog(user);
+    } else {
+      const user = { id: res.user.id };
+
+      registration((err, body) => {
         if (err) {
           bot.botkit.log(JSON.stringify(err));
           return;
         }
 
-        // Channel ID 毎に context と更新日時を保持
-        contexts.set(message.channel, {
-          context: body.context,
-          updatedAt: Date.now()
-        });
-
-        bot.reply(message, body.utt);
-      }
-    );
+        user.appId = body.appId;
+        users.set(res.user.id, user);
+        dialog(user);
+      });
+    }
   });
 };
 
