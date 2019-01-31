@@ -1,7 +1,7 @@
 const Twitter = require("twitter");
 const request = require("request");
 
-const REPLY_FREQUENCY = 0.1; // "ambient" に返答する頻度
+const REPLY_FREQUENCY = 0.05; // "ambient" に返答する頻度
 
 /**
  * Twitter の API クライアント
